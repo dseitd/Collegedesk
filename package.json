@@ -5,6 +5,7 @@
     "web-vitals": "^5.0.1"
   },
   "dependencies": {
-    "@testing-library/jest-dom": "^6.6.3"
+    "@testing-library/jest-dom": "^6.6.3",
+    "serve": "^14.2.4"
   }
 }

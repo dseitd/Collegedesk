@@ -14,7 +14,8 @@ RUN npm config set legacy-peer-deps true && \
     npm config set fetch-retry-maxtimeout 600000 && \
     npm config set fetch-retries 5 && \
     npm config set network-timeout 300000 && \
-    npm install --legacy-peer-deps --production=false
+    npm install --legacy-peer-deps --production=false && \
+    npm install react-scripts -g
 
 # Копирование исходного кода
 COPY webapp/ ./
@@ -28,7 +29,7 @@ ENV DISABLE_ESLINT_PLUGIN=true
 ENV GENERATE_SOURCEMAP=false
 
 # Сборка приложения
-RUN npm run build
+RUN CI=false NODE_ENV=development npm run build
 
 # Настройка production окружения
 FROM nginx:stable-alpine

@@ -9,11 +9,8 @@ RUN apk add --no-cache python3 make g++
 # Копирование package.json и package-lock.json
 COPY webapp/package*.json ./
 
-# Добавляем вывод содержимого package.json для отладки
-RUN echo "Содержимое package.json:" && \
-    cat package.json && \
-    echo "Установка зависимостей..." && \
-    npm install --legacy-peer-deps --force
+# Установка зависимостей с дополнительными флагами
+RUN npm install --legacy-peer-deps --force
 
 # Копирование исходного кода
 COPY webapp/ ./
@@ -24,17 +21,16 @@ ENV NODE_OPTIONS="--max-old-space-size=4096"
 ENV NODE_ENV=production
 ENV PATH /app/node_modules/.bin:$PATH
 
-# Добавляем вывод информации для отладки
-RUN echo "Содержимое директории:" && \
+# Проверяем скрипты и запускаем сборку
+RUN npm run build || (echo "Ошибка сборки. Содержимое package.json:" && \
+    cat package.json && \
+    echo "\nСодержимое директории:" && \
     ls -la && \
-    echo "Версия Node:" && \
+    echo "\nВерсия Node:" && \
     node --version && \
-    echo "Версия NPM:" && \
+    echo "\nВерсия NPM:" && \
     npm --version && \
-    echo "Доступные скрипты:" && \
-    npm run && \
-    echo "Запуск сборки..." && \
-    npm run build
+    exit 1)
 
 # Настройка production окружения
 FROM nginx:alpine

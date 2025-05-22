@@ -16,7 +16,8 @@ RUN npm config set legacy-peer-deps true && \
     npm config set network-timeout 300000 && \
     npm install --legacy-peer-deps --force && \
     npm install typescript@4.9.5 --save-dev && \
-    npm install react-scripts@5.0.1 --save
+    npm install postcss@^8.4.31 --save && \
+    npm audit fix --force
 
 # Оптимальные настройки среды
 ENV CI=false
@@ -27,8 +28,7 @@ ENV DISABLE_ESLINT_PLUGIN=true
 ENV GENERATE_SOURCEMAP=false
 
 # Сборка приложения
-RUN npm audit fix --force && \
-    npm run build
+RUN npm run build
 
 # Настройка production окружения
 FROM nginx:stable-alpine

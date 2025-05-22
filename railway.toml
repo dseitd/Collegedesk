@@ -1,15 +1,16 @@
 [build]
-builder = "nixpacks"
-buildCommand = "cd webapp && npm install --legacy-peer-deps && CI=false npm run build"
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
 
 [deploy]
-startCommand = "cd webapp && npx serve -s build"
 healthcheckPath = "/"
 healthcheckTimeout = 100
 restartPolicyType = "ON_FAILURE"
 numReplicas = 1
 
 [deploy.envs]
+PORT = "80"
+NODE_ENV = "production"
 REACT_APP_API_URL = "https://api.collegedesk.railway.app"
 PORT = "3000"
 NODE_ENV = "production"

@@ -9,8 +9,10 @@ RUN apk add --no-cache python3 make g++ git
 # Копирование package.json и package-lock.json
 COPY webapp/package*.json ./
 
-# Установка зависимостей с дополнительными флагами и проверка версий
-RUN npm install --legacy-peer-deps --force
+# Установка зависимостей с дополнительными флагами
+RUN npm install -g npm@latest && \
+    npm cache clean --force && \
+    npm install --legacy-peer-deps --force
 
 # Копирование исходного кода
 COPY webapp/ ./
@@ -24,9 +26,11 @@ ENV DISABLE_ESLINT_PLUGIN=true
 ENV GENERATE_SOURCEMAP=false
 
 # Проверяем скрипты и запускаем сборку с отладочной информацией
-RUN cd /app && \
-    npm install && \
-    npm run build || (echo "Build failed. Directory contents:" && ls -la && exit 1)
+RUN echo "Node version: $(node -v)" && \
+    echo "NPM version: $(npm -v)" && \
+    echo "Directory contents:" && \
+    ls -la && \
+    npm run build
 
 # Настройка production окружения
 FROM nginx:alpine

@@ -9,8 +9,8 @@ ENV NODE_OPTIONS="--max-old-space-size=4096"
 RUN apk add --no-cache python3 make g++ git && \
     npm cache clean --force && \
     npm config set legacy-peer-deps true && \
-    npm ci && \
-    npm audit fix --force || true && \
+    npm install && \
+    npm install --save postcss@^8.4.31 postcss-preset-env@^9.3.0 && \
     CI=false SKIP_PREFLIGHT_CHECK=true DISABLE_ESLINT_PLUGIN=true NODE_ENV=production npm run build
 
 # Stage 2: Setup Python for bot and backend

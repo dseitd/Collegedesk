@@ -4,7 +4,7 @@ FROM node:18-alpine as builder
 WORKDIR /app
 
 # Установка дополнительных зависимостей
-RUN apk add --no-cache python3 make g++
+RUN apk add --no-cache python3 make g++ git
 
 # Копирование package.json и package-lock.json
 COPY webapp/package*.json ./
@@ -24,8 +24,9 @@ ENV DISABLE_ESLINT_PLUGIN=true
 ENV GENERATE_SOURCEMAP=false
 
 # Проверяем скрипты и запускаем сборку
-RUN npm install react-scripts --save-dev && \
-    npm install node-sass --save-dev && \
+RUN npm install -g npm@latest && \
+    npm cache clean --force && \
+    npm install && \
     npm run build
 
 # Настройка production окружения

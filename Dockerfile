@@ -5,13 +5,11 @@ WORKDIR /app/webapp
 COPY webapp/ ./
 
 # Установка зависимостей с правильными флагами
-RUN npm config set legacy-peer-deps true && \
-    npm config set fetch-retry-maxtimeout 600000 && \
-    npm config set fetch-retries 5 && \
-    npm config set network-timeout 300000 && \
-    npm install --legacy-peer-deps --force && \
-    npm install typescript@4.9.5 --save-dev && \
-    npm install postcss@^8.4.31 --save && \
+ENV NODE_OPTIONS="--max-old-space-size=4096"
+RUN apk add --no-cache python3 make g++ git && \
+    npm cache clean --force && \
+    npm config set legacy-peer-deps true && \
+    npm install --legacy-peer-deps && \
     npm run build
 
 # Stage 2: Setup Python for bot and backend

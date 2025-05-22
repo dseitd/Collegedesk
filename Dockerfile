@@ -24,7 +24,8 @@ ENV DISABLE_ESLINT_PLUGIN=true
 ENV GENERATE_SOURCEMAP=false
 
 # Проверяем скрипты и запускаем сборку
-RUN npm install react-scripts -g && \
+RUN npm install react-scripts --save-dev && \
+    npm rebuild node-sass && \
     npm run build
 
 # Настройка production окружения

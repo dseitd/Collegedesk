@@ -1,9 +1,9 @@
 [build]
 builder = "nixpacks"
-buildCommand = "npm ci && npm run build"
+buildCommand = "npm install --force && CI=false npm run build"
 
 [deploy]
-startCommand = "serve -s build"
+startCommand = "npx serve -s build"
 healthcheckPath = "/"
 healthcheckTimeout = 100
 restartPolicyType = "ON_FAILURE"
@@ -14,3 +14,6 @@ REACT_APP_API_URL = "https://api.collegedesk.railway.app"
 PORT = "3000"
 NODE_ENV = "production"
 CI = "false"
+NPM_CONFIG_PRODUCTION = "false"
+NODE_OPTIONS = "--max_old_space_size=4096"
+NIXPACKS_NODE_VERSION = "18"

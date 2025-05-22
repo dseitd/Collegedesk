@@ -6,14 +6,15 @@ WORKDIR /app
 # Копирование package.json и package-lock.json
 COPY webapp/package*.json ./
 
-# Установка зависимостей
-RUN npm install --legacy-peer-deps
+# Установка зависимостей с дополнительными флагами
+RUN npm install --legacy-peer-deps --force
 
 # Копирование исходного кода
 COPY webapp/ ./
 
-# Сборка приложения
+# Сборка приложения с увеличенным объемом памяти
 ENV CI=false
+ENV NODE_OPTIONS="--max-old-space-size=4096"
 RUN npm run build
 
 # Настройка production окружения

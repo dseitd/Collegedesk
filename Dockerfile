@@ -6,19 +6,16 @@ WORKDIR /app
 # Установка дополнительных зависимостей
 RUN apk add --no-cache python3 make g++ git
 
-# Копирование package.json и package-lock.json
-COPY webapp/package*.json ./
+# Копирование всего проекта
+COPY webapp/ ./
 
 # Установка зависимостей с оптимальными настройками
 RUN npm config set legacy-peer-deps true && \
     npm config set fetch-retry-maxtimeout 600000 && \
     npm config set fetch-retries 5 && \
     npm config set network-timeout 300000 && \
-    npm install --legacy-peer-deps --production=false && \
-    npm install -g create-react-app react-scripts
-
-# Копирование исходного кода
-COPY webapp/ ./
+    npm install --legacy-peer-deps --force && \
+    npm install -g create-react-app@5.0.1 react-scripts@5.0.1
 
 # Оптимальные настройки среды
 ENV CI=false
@@ -28,11 +25,8 @@ ENV PATH /app/node_modules/.bin:$PATH
 ENV DISABLE_ESLINT_PLUGIN=true
 ENV GENERATE_SOURCEMAP=false
 
-# Проверка и сборка приложения
-RUN ls -la && \
-    npm install && \
-    chmod +x node_modules/.bin/react-scripts && \
-    CI=false DISABLE_ESLINT_PLUGIN=true npm run build
+# Сборка приложения
+RUN CI=false DISABLE_ESLINT_PLUGIN=true NODE_ENV=development ./node_modules/.bin/react-scripts build
 
 # Настройка production окружения
 FROM nginx:stable-alpine

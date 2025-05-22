@@ -9,8 +9,11 @@ RUN apk add --no-cache python3 make g++
 # Копирование package.json и package-lock.json
 COPY webapp/package*.json ./
 
-# Установка зависимостей с дополнительными флагами
-RUN npm install --legacy-peer-deps --force
+# Добавляем вывод содержимого package.json для отладки
+RUN echo "Содержимое package.json:" && \
+    cat package.json && \
+    echo "Установка зависимостей..." && \
+    npm install --legacy-peer-deps --force
 
 # Копирование исходного кода
 COPY webapp/ ./
@@ -28,6 +31,8 @@ RUN echo "Содержимое директории:" && \
     node --version && \
     echo "Версия NPM:" && \
     npm --version && \
+    echo "Доступные скрипты:" && \
+    npm run && \
     echo "Запуск сборки..." && \
     npm run build
 

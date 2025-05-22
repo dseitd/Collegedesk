@@ -21,6 +21,13 @@ COPY bot/ /app/bot/
 COPY backend/ /app/backend/
 COPY --from=webapp-builder /app/webapp/build /app/webapp/build
 
+# Создаем директории для данных
+RUN mkdir -p /app/backend/data && \
+    touch /app/backend/data/users.json /app/backend/data/schedule.json /app/backend/data/disputes.json && \
+    echo '{"users":[]}' > /app/backend/data/users.json && \
+    echo '{"groups":{}}' > /app/backend/data/schedule.json && \
+    echo '{"disputes":[]}' > /app/backend/data/disputes.json
+
 RUN pip install -r bot/requirements.txt && \
     pip install -r backend/requirements.txt
 

@@ -19,6 +19,10 @@ app.add_middleware(
 async def root():
     return {"message": "CollegeDesk API работает"}
 
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy"}
+
 @app.post("/schedule/upload")
 async def upload_schedule(file: UploadFile = File(...), user_id: str = None):
     # Проверка роли пользователя

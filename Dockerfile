@@ -21,16 +21,6 @@ COPY bot/ /app/bot/
 COPY backend/ /app/backend/
 COPY --from=webapp-builder /app/webapp/build /app/webapp/build
 
-# Создаем директории для данных
-RUN mkdir -p /app/backend/data && \
-    touch /app/backend/data/users.json /app/backend/data/schedule.json /app/backend/data/disputes.json && \
-    echo '{"users":[]}' > /app/backend/data/users.json && \
-    echo '{"groups":{}}' > /app/backend/data/schedule.json && \
-    echo '{"disputes":[]}' > /app/backend/data/disputes.json
-
-RUN pip install -r bot/requirements.txt && \
-    pip install -r backend/requirements.txt
-
 # Stage 3: Production environment
 FROM nginx:stable-alpine
 
@@ -38,16 +28,24 @@ FROM nginx:stable-alpine
 COPY --from=webapp-builder /app/webapp/build /usr/share/nginx/html
 COPY webapp/nginx.conf /etc/nginx/conf.d/default.conf
 
-# Copy Python environment
-COPY --from=python-base /usr/local/lib/python3.9 /usr/local/lib/python3.9
-COPY --from=python-base /usr/local/bin /usr/local/bin
+# Install Python and dependencies
+RUN apk add --no-cache python3 py3-pip supervisor
+
+# Copy Python environment and install requirements
 COPY --from=python-base /app /app
-
-# Install supervisor
-RUN apk add --no-cache supervisor python3 py3-pip
-
-# Add supervisor configuration
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
+# Install Python packages
+WORKDIR /app/backend
+RUN pip3 install -r requirements.txt
+WORKDIR /app/bot
+RUN pip3 install -r requirements.txt
+
+# Create data directories and initialize files
+RUN mkdir -p /app/backend/data && \
+    echo '{"users":[]}' > /app/backend/data/users.json && \
+    echo '{"groups":{}}' > /app/backend/data/schedule.json && \
+    echo '{"disputes":[]}' > /app/backend/data/disputes.json
 
 EXPOSE 80
 

@@ -30,7 +30,7 @@ class RegistrationStates(StatesGroup):
 
 # Работа с JSON файлами
 async def read_json(filename: str):
-    path = f"../backend/data/{filename}.json"
+    path = f"/app/backend/data/{filename}.json"
     try:
         with open(path, "r", encoding="utf-8") as file:
             return json.load(file)
@@ -38,7 +38,7 @@ async def read_json(filename: str):
         return None
 
 async def write_json(filename: str, data: dict):
-    path = f"../backend/data/{filename}.json"
+    path = f"/app/backend/data/{filename}.json"
     with open(path, "w", encoding="utf-8") as file:
         json.dump(data, file, ensure_ascii=False, indent=2)
 

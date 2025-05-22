@@ -7,6 +7,8 @@ healthcheckPath = "/api/health"
 healthcheckTimeout = 300
 restartPolicyType = "ON_FAILURE"
 numReplicas = 1
+startupTimeout = "5m"
+healthcheckInterval = "30s"
 
 [deploy.envs]
 PORT = "80"

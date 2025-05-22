@@ -19,7 +19,17 @@ COPY webapp/ ./
 ENV CI=false
 ENV NODE_OPTIONS="--max-old-space-size=4096"
 ENV NODE_ENV=production
-RUN npm run build
+ENV PATH /app/node_modules/.bin:$PATH
+
+# Добавляем вывод информации для отладки
+RUN echo "Содержимое директории:" && \
+    ls -la && \
+    echo "Версия Node:" && \
+    node --version && \
+    echo "Версия NPM:" && \
+    npm --version && \
+    echo "Запуск сборки..." && \
+    npm run build
 
 # Настройка production окружения
 FROM nginx:alpine

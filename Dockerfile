@@ -15,7 +15,7 @@ RUN npm config set legacy-peer-deps true && \
     npm config set fetch-retries 5 && \
     npm config set network-timeout 300000 && \
     npm install --legacy-peer-deps --production=false && \
-    npm install react-scripts -g
+    npm install -g create-react-app react-scripts
 
 # Копирование исходного кода
 COPY webapp/ ./
@@ -28,8 +28,11 @@ ENV PATH /app/node_modules/.bin:$PATH
 ENV DISABLE_ESLINT_PLUGIN=true
 ENV GENERATE_SOURCEMAP=false
 
-# Сборка приложения
-RUN CI=false NODE_ENV=development npm run build
+# Проверка и сборка приложения
+RUN ls -la && \
+    npm install && \
+    chmod +x node_modules/.bin/react-scripts && \
+    CI=false DISABLE_ESLINT_PLUGIN=true npm run build
 
 # Настройка production окружения
 FROM nginx:stable-alpine

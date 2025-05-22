@@ -1,9 +1,9 @@
 [build]
 builder = "nixpacks"
-buildCommand = "npm install --legacy-peer-deps && CI=false npm run build"
+buildCommand = "cd webapp && npm install --legacy-peer-deps && CI=false npm run build"
 
 [deploy]
-startCommand = "npx serve -s build"
+startCommand = "cd webapp && npx serve -s build"
 healthcheckPath = "/"
 healthcheckTimeout = 100
 restartPolicyType = "ON_FAILURE"

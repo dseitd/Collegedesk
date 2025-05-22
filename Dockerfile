@@ -10,9 +10,8 @@ RUN apk add --no-cache python3 make g++ git
 COPY webapp/package*.json ./
 
 # Установка зависимостей с дополнительными флагами
-RUN npm install -g npm@latest && \
-    npm cache clean --force && \
-    npm install --legacy-peer-deps --force
+RUN npm config set legacy-peer-deps true && \
+    npm install --production --force
 
 # Копирование исходного кода
 COPY webapp/ ./

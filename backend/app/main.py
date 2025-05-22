@@ -21,7 +21,26 @@ async def root():
 
 @app.get("/health")
 async def health_check():
-    return {"status": "healthy"}
+    try:
+        # Проверяем доступность файлов данных
+        data_files = ["users.json", "schedule.json", "disputes.json"]
+        for file in data_files:
+            path = f"/app/backend/data/{file}"
+            if not os.path.exists(path):
+                return {"status": "unhealthy", "error": f"Missing data file: {file}"}
+        
+        # Проверяем возможность чтения/записи
+        test_file = "/app/backend/data/health_check.tmp"
+        try:
+            with open(test_file, "w") as f:
+                f.write("test")
+            os.remove(test_file)
+        except Exception as e:
+            return {"status": "unhealthy", "error": f"File system error: {str(e)}"}
+        
+        return {"status": "healthy"}
+    except Exception as e:
+        return {"status": "unhealthy", "error": str(e)}
 
 @app.post("/schedule/upload")
 async def upload_schedule(file: UploadFile = File(...), user_id: str = None):

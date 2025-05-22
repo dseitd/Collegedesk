@@ -28,15 +28,10 @@ async def health_check():
             path = f"/app/backend/data/{file}"
             if not os.path.exists(path):
                 return {"status": "unhealthy", "error": f"Missing data file: {file}"}
-        
-        # Проверяем возможность чтения/записи
-        test_file = "/app/backend/data/health_check.tmp"
-        try:
-            with open(test_file, "w") as f:
-                f.write("test")
-            os.remove(test_file)
-        except Exception as e:
-            return {"status": "unhealthy", "error": f"File system error: {str(e)}"}
+            
+            # Проверяем права доступа
+            if not os.access(path, os.R_OK | os.W_OK):
+                return {"status": "unhealthy", "error": f"Insufficient permissions for {file}"}
         
         return {"status": "healthy"}
     except Exception as e:

@@ -6,36 +6,29 @@ WORKDIR /app
 # Установка дополнительных зависимостей
 RUN apk add --no-cache python3 make g++ git
 
-# Установка стабильной версии npm
-RUN npm install -g npm@8.19.4
-
 # Копирование package.json и package-lock.json
 COPY webapp/package*.json ./
 
-# Установка всех зависимостей одним шагом
+# Установка зависимостей с оптимальными настройками
 RUN npm config set legacy-peer-deps true && \
     npm config set fetch-retry-maxtimeout 600000 && \
     npm config set fetch-retries 5 && \
     npm config set network-timeout 300000 && \
-    npm install --force
+    npm install --legacy-peer-deps --production=false
 
 # Копирование исходного кода
 COPY webapp/ ./
 
 # Оптимальные настройки среды
 ENV CI=false
-ENV NODE_OPTIONS="--max-old-space-size=2048"
-ENV NODE_ENV=production
+ENV NODE_OPTIONS="--max-old-space-size=1024"
+ENV NODE_ENV=development
 ENV PATH /app/node_modules/.bin:$PATH
 ENV DISABLE_ESLINT_PLUGIN=true
 ENV GENERATE_SOURCEMAP=false
 
-# Сборка приложения с подробным логированием
-RUN echo "=== Environment Info ===" && \
-    node -v && \
-    npm -v && \
-    echo "=== Starting build ===" && \
-    npm run build || (echo "=== Build failed! ===" && exit 1)
+# Сборка приложения
+RUN npm run build
 
 # Настройка production окружения
 FROM nginx:stable-alpine

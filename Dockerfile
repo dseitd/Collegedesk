@@ -15,18 +15,18 @@ RUN npm config set legacy-peer-deps true && \
     npm config set fetch-retries 5 && \
     npm config set network-timeout 300000 && \
     npm install --legacy-peer-deps --force && \
-    npm install -g create-react-app@5.0.1 react-scripts@5.0.1
+    npm install react-scripts@5.0.1 --save
 
 # Оптимальные настройки среды
 ENV CI=false
-ENV NODE_OPTIONS="--max-old-space-size=1024"
+ENV NODE_OPTIONS="--max-old-space-size=512"
 ENV NODE_ENV=development
 ENV PATH /app/node_modules/.bin:$PATH
 ENV DISABLE_ESLINT_PLUGIN=true
 ENV GENERATE_SOURCEMAP=false
 
 # Сборка приложения
-RUN CI=false DISABLE_ESLINT_PLUGIN=true NODE_ENV=development ./node_modules/.bin/react-scripts build
+RUN npm run build
 
 # Настройка production окружения
 FROM nginx:stable-alpine

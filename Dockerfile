@@ -15,6 +15,7 @@ RUN npm config set legacy-peer-deps true && \
     npm config set fetch-retries 5 && \
     npm config set network-timeout 300000 && \
     npm install --legacy-peer-deps --force && \
+    npm install typescript@4.9.5 --save-dev && \
     npm install react-scripts@5.0.1 --save
 
 # Оптимальные настройки среды
@@ -26,7 +27,8 @@ ENV DISABLE_ESLINT_PLUGIN=true
 ENV GENERATE_SOURCEMAP=false
 
 # Сборка приложения
-RUN npm run build
+RUN npm audit fix --force && \
+    npm run build
 
 # Настройка production окружения
 FROM nginx:stable-alpine

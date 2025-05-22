@@ -3,6 +3,9 @@ FROM node:18-alpine as builder
 # Установка рабочей директории
 WORKDIR /app
 
+# Установка дополнительных зависимостей
+RUN apk add --no-cache python3 make g++
+
 # Копирование package.json и package-lock.json
 COPY webapp/package*.json ./
 
@@ -15,6 +18,7 @@ COPY webapp/ ./
 # Сборка приложения с увеличенным объемом памяти
 ENV CI=false
 ENV NODE_OPTIONS="--max-old-space-size=4096"
+ENV NODE_ENV=production
 RUN npm run build
 
 # Настройка production окружения

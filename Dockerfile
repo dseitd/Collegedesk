@@ -11,25 +11,22 @@ COPY webapp/package*.json ./
 
 # Установка зависимостей с дополнительными флагами
 RUN npm config set legacy-peer-deps true && \
-    npm install --production --force
+    npm config set fetch-retry-maxtimeout 600000 && \
+    npm install --no-optional --force
 
 # Копирование исходного кода
 COPY webapp/ ./
 
 # Сборка приложения с увеличенным объемом памяти
 ENV CI=false
-ENV NODE_OPTIONS="--max-old-space-size=8192"
+ENV NODE_OPTIONS="--max-old-space-size=4096"
 ENV NODE_ENV=production
 ENV PATH /app/node_modules/.bin:$PATH
 ENV DISABLE_ESLINT_PLUGIN=true
 ENV GENERATE_SOURCEMAP=false
 
-# Проверяем скрипты и запускаем сборку с отладочной информацией
-RUN echo "Node version: $(node -v)" && \
-    echo "NPM version: $(npm -v)" && \
-    echo "Directory contents:" && \
-    ls -la && \
-    npm run build
+# Проверяем скрипты и запускаем сборку
+RUN npm run build || (echo "Build failed with error $?" && ls -la && exit 1)
 
 # Настройка production окружения
 FROM nginx:alpine

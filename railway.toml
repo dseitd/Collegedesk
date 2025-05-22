@@ -4,7 +4,7 @@ dockerfilePath = "Dockerfile"
 
 [deploy]
 healthcheckPath = "/"
-healthcheckTimeout = 100
+healthcheckTimeout = 300
 restartPolicyType = "ON_FAILURE"
 numReplicas = 1
 
@@ -14,6 +14,7 @@ NODE_ENV = "production"
 REACT_APP_API_URL = "https://api.collegedesk.railway.app"
 CI = "false"
 NPM_CONFIG_PRODUCTION = "false"
-NODE_OPTIONS = "--max_old_space_size=4096"
+NODE_OPTIONS = "--max_old_space_size=2048"
 NIXPACKS_NODE_VERSION = "18"
 NIXPACKS_YARN_ENABLE = "false"
+PYTHON_VERSION = "3.9"

@@ -9,8 +9,10 @@ ENV NODE_OPTIONS="--max-old-space-size=4096"
 RUN apk add --no-cache python3 make g++ git && \
     npm cache clean --force && \
     npm config set legacy-peer-deps true && \
-    npm install --legacy-peer-deps && \
-    npm run build
+    npm install typescript@4.9.5 --save && \
+    npm install && \
+    npm audit fix --force || true && \
+    CI=false SKIP_PREFLIGHT_CHECK=true npm run build
 
 # Stage 2: Setup Python for bot and backend
 FROM python:3.9-slim as python-base

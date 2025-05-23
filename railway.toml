@@ -9,6 +9,7 @@ restartPolicyType = "ON_FAILURE"
 numReplicas = 1
 startupTimeout = "15m"
 healthcheckInterval = "60s"
+restartPolicyMaxRetries = 5
 
 [deploy.envs]
 PORT = "80"
@@ -26,3 +27,4 @@ NPM_CONFIG_LEGACY_PEER_DEPS = "true"
 BOT_TOKEN = "${BOT_TOKEN}"
 WEBAPP_URL = "https://collegedesk-production.up.railway.app"
 DATABASE_URL = "${DATABASE_URL}"
+PYTHONUNBUFFERED = "1"

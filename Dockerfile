@@ -34,20 +34,15 @@ COPY --from=webapp-builder /app/webapp/build /usr/share/nginx/html
 
 # Создаем директории для данных и устанавливаем права
 RUN mkdir -p /app/backend/data && \
-    chown -R www-data:www-data /app/backend/data
-
-# Устанавливаем зависимости Python
-WORKDIR /app/backend
-RUN pip3 install --no-cache-dir -r requirements.txt
-
-WORKDIR /app/bot
-RUN pip3 install --no-cache-dir -r requirements.txt
-
-# Инициализируем файлы данных
-RUN echo '{"users":[]}' > /app/backend/data/users.json && \
+    echo '{"users":[]}' > /app/backend/data/users.json && \
     echo '{"groups":{}}' > /app/backend/data/schedule.json && \
     echo '{"disputes":[]}' > /app/backend/data/disputes.json && \
-    chown -R www-data:www-data /app/backend/data/*.json
+    echo '{"grades":[]}' > /app/backend/data/grades.json && \
+    echo '{"attendance":[]}' > /app/backend/data/attendance.json && \
+    echo '{"news":[]}' > /app/backend/data/news.json && \
+    chown -R www-data:www-data /app/backend/data && \
+    chmod -R 644 /app/backend/data/*.json && \
+    chmod 755 /app/backend/data
 
 # Настройка прав доступа
 RUN chown -R www-data:www-data /app && \

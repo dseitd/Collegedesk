@@ -39,12 +39,12 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Создаем директории и файлы с правильными правами
 RUN mkdir -p /app/backend/data && \
-    for file in users.json schedule.json disputes.json; do \
+    for file in users.json schedule.json disputes.json attendance.json grades.json news.json; do \
         echo '{"'${file%.*}'":{'$([ "$file" = "users.json" ] && echo '"users"' || echo '"'${file%.*}'"')':[]}}' > /app/backend/data/$file; \
     done && \
     chown -R www-data:www-data /app/backend/data && \
-    chmod -R 755 /app/backend/data && \
-    chmod 644 /app/backend/data/*.json
+    chmod -R 777 /app/backend/data && \
+    chmod 666 /app/backend/data/*.json
 
 # Настройка прав доступа для всего приложения
 RUN chown -R www-data:www-data /app && \

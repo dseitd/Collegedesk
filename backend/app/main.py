@@ -21,24 +21,50 @@ async def root():
 
 @app.get("/health")
 async def health_check():
+    response = {
+        "status": "checking",
+        "components": {},
+        "errors": []
+    }
+    
     try:
         # Проверяем доступность файлов данных
-        data_files = ["users.json", "schedule.json", "disputes.json"]
+        data_files = ["users.json", "schedule.json", "disputes.json", "attendance.json", "grades.json", "news.json"]
         for file in data_files:
+            file_status = {"exists": False, "readable": False, "valid_json": False}
             path = f"/app/backend/data/{file}"
-            if not os.path.exists(path):
-                return {"status": "unhealthy", "error": f"Missing data file: {file}"}
             
-            # Проверяем права доступа и возможность чтения/записи
-            try:
-                with open(path, "r") as f:
-                    json.load(f)  # Проверяем, что файл содержит валидный JSON
-            except (IOError, json.JSONDecodeError) as e:
-                return {"status": "unhealthy", "error": f"Cannot read/parse {file}: {str(e)}"}
+            # Проверка существования
+            if os.path.exists(path):
+                file_status["exists"] = True
+                
+                # Проверка прав доступа и JSON
+                try:
+                    with open(path, "r") as f:
+                        json.load(f)
+                        file_status["readable"] = True
+                        file_status["valid_json"] = True
+                except IOError as e:
+                    response["errors"].append(f"IO Error with {file}: {str(e)}")
+                except json.JSONDecodeError as e:
+                    file_status["readable"] = True
+                    response["errors"].append(f"Invalid JSON in {file}: {str(e)}")
+                    
+            response["components"][file] = file_status
         
-        return {"status": "healthy", "message": "All systems operational"}
+        # Проверяем общий статус
+        all_ok = all(
+            all(status.values()) 
+            for status in response["components"].values()
+        )
+        
+        response["status"] = "healthy" if all_ok else "unhealthy"
+        return response
+        
     except Exception as e:
-        return {"status": "unhealthy", "error": str(e)}
+        response["status"] = "error"
+        response["errors"].append(str(e))
+        return response
 
 @app.post("/schedule/upload")
 async def upload_schedule(file: UploadFile = File(...), user_id: str = None):

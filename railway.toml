@@ -8,8 +8,8 @@ healthcheckTimeout = 600
 restartPolicyType = "ON_FAILURE"
 numReplicas = 1
 startupTimeout = "15m"
-healthcheckInterval = "60s"
-restartPolicyMaxRetries = 5
+healthcheckInterval = "30s"
+restartPolicyMaxRetries = 10
 
 [deploy.envs]
 PORT = "80"

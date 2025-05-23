@@ -43,10 +43,13 @@ RUN mkdir -p /app/backend/data /var/log/nginx /var/cache/nginx && \
     chown -R www-data:www-data /var/log/nginx /var/cache/nginx && \
     chmod -R 755 /var/log/nginx /var/cache/nginx
 
-# Инициализация файлов данных
-RUN for file in users.json schedule.json disputes.json attendance.json grades.json news.json; do \
-        echo '{"data":[]}' > "/app/backend/data/$file"; \
-    done && \
+# Инициализация файлов данных с правильной структурой
+RUN echo '{"users":[]}' > /app/backend/data/users.json && \
+    echo '{"groups":{}}' > /app/backend/data/schedule.json && \
+    echo '{"disputes":[]}' > /app/backend/data/disputes.json && \
+    echo '{"attendance":[]}' > /app/backend/data/attendance.json && \
+    echo '{"grades":[]}' > /app/backend/data/grades.json && \
+    echo '{"news":[]}' > /app/backend/data/news.json && \
     chown -R www-data:www-data /app/backend/data && \
     chmod -R 777 /app/backend/data && \
     chmod 666 /app/backend/data/*.json

@@ -4,29 +4,29 @@ dockerfilePath = "Dockerfile"
 
 [deploy]
 healthcheckPath = "/api/health"
-healthcheckTimeout = 180
+healthcheckTimeout = 900
 restartPolicyType = "ON_FAILURE"
 numReplicas = 1
-startupTimeout = "10m"
-healthcheckInterval = "30s"
+startupTimeout = "15m"
+healthcheckInterval = "60s"
 restartPolicyMaxRetries = 10
 
 [deploy.envs]
 PORT = "80"
 NODE_ENV = "production"
-REACT_APP_API_URL = "https://${RAILWAY_SERVICE_DOMAIN}"
+REACT_APP_API_URL = "https://${RAILWAY_PUBLIC_DOMAIN}"
 CI = "false"
 NPM_CONFIG_PRODUCTION = "false"
 NODE_OPTIONS = "--max_old_space_size=4096"
-NIXPACKS_NODE_VERSION = "18"
-NIXPACKS_YARN_ENABLE = "false"
 PYTHON_VERSION = "3.9"
 SKIP_PREFLIGHT_CHECK = "true"
 DISABLE_ESLINT_PLUGIN = "true"
 NPM_CONFIG_LEGACY_PEER_DEPS = "true"
 BOT_TOKEN = "${BOT_TOKEN}"
-WEBAPP_URL = "https://${RAILWAY_SERVICE_DOMAIN}"
+WEBAPP_URL = "https://${RAILWAY_PUBLIC_DOMAIN}"
 DATABASE_URL = "${DATABASE_URL}"
 PYTHONUNBUFFERED = "1"
+TELEGRAM_BOT_TOKEN = "${BOT_TOKEN}"
+TELEGRAM_WEBHOOK_URL = "https://${RAILWAY_PUBLIC_DOMAIN}/bot/webhook"
 RAILWAY_DOCKERFILE_PATH = "Dockerfile"
 RAILWAY_HEALTHCHECK_PATH = "/api/health"

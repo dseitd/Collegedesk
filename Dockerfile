@@ -16,7 +16,7 @@ RUN apk add --no-cache python3 make g++ git && \
 # Stage 2: Production environment
 FROM python:3.9-slim
 
-# Установка системных зависимостей (объединенный блок)
+# Установка системных зависимостей
 RUN apt-get update && apt-get install -y \
     nginx \
     supervisor \
@@ -33,25 +33,29 @@ COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 COPY webapp/nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=webapp-builder /app/webapp/build /usr/share/nginx/html
 
-# Устанавливаем Python зависимости и настраиваем окружение
-ENV PYTHONPATH=/app
+# Устанавливаем Python зависимости
+ENV PYTHONPATH=/app \
+    PYTHONUNBUFFERED=1
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Создаем директории и файлы с правильными правами
-RUN mkdir -p /app/backend/data && \
-    echo '{"users":[]}' > /app/backend/data/users.json && \
-    echo '{"groups":{}}' > /app/backend/data/schedule.json && \
-    echo '{"disputes":[]}' > /app/backend/data/disputes.json && \
-    echo '{"attendance":[]}' > /app/backend/data/attendance.json && \
-    echo '{"grades":[]}' > /app/backend/data/grades.json && \
-    echo '{"news":[]}' > /app/backend/data/news.json && \
+# Создаем необходимые директории и файлы
+RUN mkdir -p /app/backend/data /var/log/nginx /var/cache/nginx && \
+    chown -R www-data:www-data /var/log/nginx /var/cache/nginx && \
+    chmod -R 755 /var/log/nginx /var/cache/nginx
+
+# Инициализация файлов данных
+RUN for file in users.json schedule.json disputes.json attendance.json grades.json news.json; do \
+        echo '{"data":[]}' > "/app/backend/data/$file"; \
+    done && \
     chown -R www-data:www-data /app/backend/data && \
     chmod -R 777 /app/backend/data && \
     chmod 666 /app/backend/data/*.json
 
-# Настройка прав доступа для всего приложения
+# Настройка прав доступа
 RUN chown -R www-data:www-data /app && \
-    chmod -R 755 /app
+    chmod -R 755 /app && \
+    chown -R www-data:www-data /usr/share/nginx/html && \
+    chmod -R 755 /usr/share/nginx/html
 
 EXPOSE 80
 

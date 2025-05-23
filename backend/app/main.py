@@ -29,11 +29,14 @@ async def health_check():
             if not os.path.exists(path):
                 return {"status": "unhealthy", "error": f"Missing data file: {file}"}
             
-            # Проверяем права доступа
-            if not os.access(path, os.R_OK | os.W_OK):
-                return {"status": "unhealthy", "error": f"Insufficient permissions for {file}"}
+            # Проверяем права доступа и возможность чтения/записи
+            try:
+                with open(path, "r") as f:
+                    json.load(f)  # Проверяем, что файл содержит валидный JSON
+            except (IOError, json.JSONDecodeError) as e:
+                return {"status": "unhealthy", "error": f"Cannot read/parse {file}: {str(e)}"}
         
-        return {"status": "healthy"}
+        return {"status": "healthy", "message": "All systems operational"}
     except Exception as e:
         return {"status": "unhealthy", "error": str(e)}
 

@@ -26,11 +26,15 @@ RUN apt-get update && apt-get install -y \
 
 # Копируем файлы приложения
 WORKDIR /app
+COPY requirements.txt /app/
 COPY bot/ /app/bot/
 COPY backend/ /app/backend/
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 COPY webapp/nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=webapp-builder /app/webapp/build /usr/share/nginx/html
+
+# Устанавливаем Python зависимости
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Создаем директории для данных и устанавливаем права
 RUN mkdir -p /app/backend/data && \

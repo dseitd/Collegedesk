@@ -39,9 +39,12 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Создаем директории и файлы с правильными правами
 RUN mkdir -p /app/backend/data && \
-    for file in users.json schedule.json disputes.json attendance.json grades.json news.json; do \
-        echo '{"'${file%.*}'":{'$([ "$file" = "users.json" ] && echo '"users"' || echo '"'${file%.*}'"')':[]}}' > /app/backend/data/$file; \
-    done && \
+    echo '{"users":[]}' > /app/backend/data/users.json && \
+    echo '{"groups":{}}' > /app/backend/data/schedule.json && \
+    echo '{"disputes":[]}' > /app/backend/data/disputes.json && \
+    echo '{"attendance":[]}' > /app/backend/data/attendance.json && \
+    echo '{"grades":[]}' > /app/backend/data/grades.json && \
+    echo '{"news":[]}' > /app/backend/data/news.json && \
     chown -R www-data:www-data /app/backend/data && \
     chmod -R 777 /app/backend/data && \
     chmod 666 /app/backend/data/*.json

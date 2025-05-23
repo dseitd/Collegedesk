@@ -4,12 +4,12 @@ dockerfilePath = "Dockerfile"
 
 [deploy]
 healthcheckPath = "/api/health"
-healthcheckTimeout = 600
+healthcheckTimeout = 180
 restartPolicyType = "ON_FAILURE"
 numReplicas = 1
-startupTimeout = "30m"
-healthcheckInterval = "60s"
-restartPolicyMaxRetries = 15
+startupTimeout = "10m"
+healthcheckInterval = "30s"
+restartPolicyMaxRetries = 10
 
 [deploy.envs]
 PORT = "80"

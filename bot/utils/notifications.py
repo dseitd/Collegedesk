@@ -4,6 +4,7 @@ from datetime import datetime
 class NotificationManager:
     def __init__(self, bot):
         self.bot = bot
+        self.subscribers = []
 
     async def notify_teacher_about_dispute(self, teacher_id: str, student_name: str, subject: str, description: str):
         """Уведомление преподавателя о новой жалобе"""
@@ -32,3 +33,21 @@ class NotificationManager:
                 await self.bot.send_message(group_id, message)
             except Exception as e:
                 print(f"Ошибка отправки уведомления группе {group_id}: {e}")
+
+    async def notify_all(self, message):
+        """Отправка уведомления всем подписчикам"""
+        for subscriber in self.subscribers:
+            try:
+                await subscriber.notify(message)
+            except Exception as e:
+                print(f"Ошибка отправки уведомления подписчику: {e}")
+
+    def add_subscriber(self, subscriber):
+        """Добавление нового подписчика"""
+        if subscriber not in self.subscribers:
+            self.subscribers.append(subscriber)
+
+    def remove_subscriber(self, subscriber):
+        """Удаление подписчика"""
+        if subscriber in self.subscribers:
+            self.subscribers.remove(subscriber)

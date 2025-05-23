@@ -16,7 +16,7 @@ RUN apk add --no-cache python3 make g++ git && \
 # Stage 2: Production environment
 FROM python:3.9-slim
 
-# Установка системных зависимостей
+# Установка системных зависимостей (объединенный блок)
 RUN apt-get update && apt-get install -y \
     nginx \
     supervisor \
@@ -33,43 +33,20 @@ COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 COPY webapp/nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=webapp-builder /app/webapp/build /usr/share/nginx/html
 
-# Устанавливаем Python зависимости
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Анализ и исправление проблем с деплоем на Railway
-
-# Установка системных зависимостей
-RUN apt-get update && apt-get install -y \
-    nginx \
-    supervisor \
-    git \
-    build-essential \
-    && rm -rf /var/lib/apt/lists/*
-
-# Копируем файлы приложения
-WORKDIR /app
-COPY requirements.txt /app/
-COPY bot/ /app/bot/
-COPY backend/ /app/backend/
-COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
-COPY webapp/nginx.conf /etc/nginx/conf.d/default.conf
-COPY --from=webapp-builder /app/webapp/build /usr/share/nginx/html
-
-# Устанавливаем Python зависимости и добавляем директорию в PYTHONPATH
+# Устанавливаем Python зависимости и настраиваем окружение
 ENV PYTHONPATH=/app
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Создаем директории для данных и устанавливаем права
+# Создаем директории и файлы с правильными правами
 RUN mkdir -p /app/backend/data && \
-    echo '{"users":{"users":[]}}' > /app/backend/data/users.json && \
-    echo '{"schedule":{"groups":{}}}' > /app/backend/data/schedule.json && \
-    echo '{"disputes":{"disputes":[]}}' > /app/backend/data/disputes.json && \
-    chmod -R 777 /app/backend/data && \
+    for file in users.json schedule.json disputes.json; do \
+        echo '{"'${file%.*}'":{'$([ "$file" = "users.json" ] && echo '"users"' || echo '"'${file%.*}'"')':[]}}' > /app/backend/data/$file; \
+    done && \
     chown -R www-data:www-data /app/backend/data && \
-    chmod -R 644 /app/backend/data/*.json && \
-    chmod 755 /app/backend/data
+    chmod -R 755 /app/backend/data && \
+    chmod 644 /app/backend/data/*.json
 
-# Настройка прав доступа
+# Настройка прав доступа для всего приложения
 RUN chown -R www-data:www-data /app && \
     chmod -R 755 /app
 

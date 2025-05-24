@@ -26,3 +26,7 @@ BOT_TOKEN = "${BOT_TOKEN}"
 WEBAPP_URL = "https://${RAILWAY_PUBLIC_DOMAIN}"
 DATABASE_URL = "${DATABASE_URL}"
 PYTHONUNBUFFERED = "1"
+
+volumes:
+  - path: /app/backend/data
+    mode: 0777

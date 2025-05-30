@@ -4,6 +4,8 @@ import { CSSTransition, TransitionGroup } from 'react-transition-group';
 import { initTelegramWebApp, getUserData } from './utils/telegram';
 import Navigation from './components/Navigation';
 import StudentDashboard from './components/StudentDashboard';
+import TeacherDashboard from './components/TeacherDashboard';
+import AdminDashboard from './components/AdminDashboard';
 import './App.css';
 
 interface User {
@@ -32,13 +34,20 @@ const AnimatedRoutes = React.memo<AnimatedRoutesProps>(({ user }) => {
           <Route path="/" element={
             user.role === 'student' ? 
               <StudentDashboard user={user} /> : 
-              <div>Главная страница</div>
+            user.role === 'teacher' ?
+              <TeacherDashboard user={user} /> :
+            user.role === 'admin' ?
+              <AdminDashboard user={user} /> :
+              <div>Неизвестная роль пользователя</div>
           } />
           {user.role === 'student' && (
             <Route path="/dashboard" element={<StudentDashboard user={user} />} />
           )}
+          {user.role === 'teacher' && (
+            <Route path="/teacher" element={<TeacherDashboard user={user} />} />
+          )}
           {user.role === 'admin' && (
-            <Route path="/admin" element={<div>Админ панель</div>} />
+            <Route path="/admin" element={<AdminDashboard user={user} />} />
           )}
         </Routes>
       </CSSTransition>
@@ -80,7 +89,8 @@ const App: React.FC = () => {
   return (
     <Router>
       <div className="app">
-        {user.role !== 'student' && <Navigation userRole={user.role} />}
+        {/* Навигация отображается только для студентов, у преподавателей и админов своя навигация */}
+        {user.role === 'student' && <Navigation userRole={user.role} />}
         <AnimatedRoutes user={user} />
       </div>
     </Router>

@@ -6,7 +6,10 @@
   },
   "dependencies": {
     "@testing-library/jest-dom": "^6.6.3",
+    "@twa-dev/sdk": "^6.9.2",
     "ajv": "^8.17.1",
+    "react-router-dom": "^6.30.1",
+    "react-transition-group": "^4.4.5",
     "serve": "^14.2.4"
   }
 }

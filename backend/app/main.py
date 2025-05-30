@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException, Depends, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 import json
 import os
-from .utils.excel_parser import ScheduleParser
+from app.utils.excel_parser import ScheduleParser
 
 app = FastAPI(title="CollegeDesk API")
 
@@ -15,6 +15,29 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Функция для проверки роли пользователя
+async def check_user_role(user_id: str, required_role: str):
+    """Проверка роли пользователя"""
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Пользователь не авторизован")
+    
+    try:
+        with open("/app/backend/data/users.json", "r", encoding="utf-8") as f:
+            users_data = json.load(f)
+        
+        user = next((u for u in users_data.get("users", []) if u["id"] == user_id), None)
+        if not user:
+            raise HTTPException(status_code=404, detail="Пользователь не найден")
+        
+        if user["role"] != required_role and required_role != "any":
+            raise HTTPException(status_code=403, detail="Недостаточно прав")
+        
+        return user
+    except FileNotFoundError:
+        raise HTTPException(status_code=500, detail="Файл пользователей не найден")
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=500, detail="Ошибка чтения данных пользователей")
+
 @app.get("/")
 async def root():
     return {"message": "CollegeDesk API работает"}
@@ -22,7 +45,7 @@ async def root():
 @app.get("/health")
 async def health_check():
     response = {
-        "status": "healthy",  # По умолчанию считаем сервис здоровым
+        "status": "healthy",
         "components": {},
         "errors": []
     }
@@ -42,8 +65,8 @@ async def health_check():
             if not os.path.exists(path):
                 default_content = {"users": []} if file == "users.json" else {"data": []}
                 try:
-                    with open(path, "w") as f:
-                        json.dump(default_content, f)
+                    with open(path, "w", encoding="utf-8") as f:
+                        json.dump(default_content, f, ensure_ascii=False, indent=2)
                     file_status["exists"] = True
                 except Exception as e:
                     response["errors"].append(f"Failed to create {file}: {str(e)}")
@@ -53,7 +76,7 @@ async def health_check():
             
             # Проверка прав доступа и JSON
             try:
-                with open(path, "r") as f:
+                with open(path, "r", encoding="utf-8") as f:
                     json.load(f)
                     file_status["readable"] = True
                     file_status["valid_json"] = True
@@ -64,8 +87,9 @@ async def health_check():
                 response["errors"].append(f"Invalid JSON in {file}: {str(e)}")
                 # Пытаемся исправить файл
                 try:
-                    with open(path, "w") as f:
-                        json.dump({"data": []}, f)
+                    default_content = {"users": []} if file == "users.json" else {"data": []}
+                    with open(path, "w", encoding="utf-8") as f:
+                        json.dump(default_content, f, ensure_ascii=False, indent=2)
                     file_status["valid_json"] = True
                 except Exception as e:
                     response["errors"].append(f"Failed to fix {file}: {str(e)}")
@@ -98,7 +122,7 @@ async def upload_schedule(file: UploadFile = File(...), user_id: str = None):
     
     try:
         # Сохраняем временный файл
-        temp_path = f"temp_{file.filename}"
+        temp_path = f"/tmp/{file.filename}"
         with open(temp_path, "wb") as buffer:
             content = await file.read()
             buffer.write(content)
@@ -107,8 +131,9 @@ async def upload_schedule(file: UploadFile = File(...), user_id: str = None):
         parser = ScheduleParser()
         schedule_data = parser.parse_excel(temp_path)
         
-        # Сохраняем результат
-        await write_json_file("schedule", schedule_data)
+        # Сохраняем в файл
+        with open("/app/backend/data/schedule.json", "w", encoding="utf-8") as f:
+            json.dump(schedule_data, f, ensure_ascii=False, indent=2)
         
         # Удаляем временный файл
         os.remove(temp_path)
@@ -116,6 +141,41 @@ async def upload_schedule(file: UploadFile = File(...), user_id: str = None):
         return {"message": "Расписание успешно загружено", "groups": list(schedule_data["groups"].keys())}
         
     except Exception as e:
+        # Удаляем временный файл в случае ошибки
         if os.path.exists(temp_path):
             os.remove(temp_path)
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=f"Ошибка при обработке файла: {str(e)}")
+
+# Добавляем недостающие эндпоинты
+@app.get("/users/{user_id}")
+async def get_user(user_id: str):
+    """Получение информации о пользователе"""
+    try:
+        with open("/app/backend/data/users.json", "r", encoding="utf-8") as f:
+            users_data = json.load(f)
+        
+        user = next((u for u in users_data.get("users", []) if u["id"] == user_id), None)
+        if not user:
+            raise HTTPException(status_code=404, detail="Пользователь не найден")
+        
+        return user
+    except FileNotFoundError:
+        raise HTTPException(status_code=500, detail="Файл пользователей не найден")
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=500, detail="Ошибка чтения данных пользователей")
+
+@app.get("/schedule/{group}")
+async def get_schedule(group: str):
+    """Получение расписания для группы"""
+    try:
+        with open("/app/backend/data/schedule.json", "r", encoding="utf-8") as f:
+            schedule_data = json.load(f)
+        
+        if group not in schedule_data.get("groups", {}):
+            raise HTTPException(status_code=404, detail="Группа не найдена")
+        
+        return schedule_data["groups"][group]
+    except FileNotFoundError:
+        raise HTTPException(status_code=500, detail="Файл расписания не найден")
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=500, detail="Ошибка чтения расписания")

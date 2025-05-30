@@ -2,6 +2,7 @@ from aiogram import Bot, Dispatcher, types
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
+from aiogram.utils import executor
 import json
 import os
 from datetime import datetime
@@ -12,7 +13,7 @@ load_dotenv()
 
 # Конфигурация
 BOT_TOKEN = os.getenv("BOT_TOKEN")
-WEBAPP_URL = os.getenv("WEBAPP_URL")
+WEBAPP_URL = os.getenv("WEBAPP_URL", "http://localhost:3000")
 
 if not BOT_TOKEN:
     raise ValueError("Не установлен BOT_TOKEN в файле .env")
@@ -30,15 +31,39 @@ class RegistrationStates(StatesGroup):
 
 # Работа с JSON файлами
 async def read_json(filename: str):
-    path = f"/app/backend/data/{filename}.json"
+    # Исправляем путь к файлам данных
+    base_path = "/app/backend/data" if os.path.exists("/app/backend/data") else "./backend/data"
+    path = f"{base_path}/{filename}.json"
+    
     try:
+        # Создаем директорию если не существует
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        
+        if not os.path.exists(path):
+            # Создаем файл с базовой структурой
+            default_content = {"users": []} if filename == "users" else {"data": []}
+            with open(path, "w", encoding="utf-8") as file:
+                json.dump(default_content, file, ensure_ascii=False, indent=2)
+            return default_content
+            
         with open(path, "r", encoding="utf-8") as file:
             return json.load(file)
     except FileNotFoundError:
-        return None
+        return {"users": []} if filename == "users" else {"data": []}
+    except json.JSONDecodeError:
+        # Если файл поврежден, создаем новый
+        default_content = {"users": []} if filename == "users" else {"data": []}
+        with open(path, "w", encoding="utf-8") as file:
+            json.dump(default_content, file, ensure_ascii=False, indent=2)
+        return default_content
 
 async def write_json(filename: str, data: dict):
-    path = f"/app/backend/data/{filename}.json"
+    base_path = "/app/backend/data" if os.path.exists("/app/backend/data") else "./backend/data"
+    path = f"{base_path}/{filename}.json"
+    
+    # Создаем директорию если не существует
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    
     with open(path, "w", encoding="utf-8") as file:
         json.dump(data, file, ensure_ascii=False, indent=2)
 
@@ -46,7 +71,7 @@ async def write_json(filename: str, data: dict):
 @dp.message_handler(commands=['start'])
 async def cmd_start(message: types.Message):
     user_data = await read_json("users")
-    user_exists = any(user["id"] == str(message.from_user.id) for user in user_data["users"])
+    user_exists = any(user["id"] == str(message.from_user.id) for user in user_data.get("users", []))
     
     if user_exists:
         keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
@@ -98,8 +123,11 @@ async def register_user(message: types.Message, state: FSMContext):
         "role": user_data["role"],
         "full_name": user_data["full_name"],
         "group": user_data.get("group", ""),
-        "created_at": datetime.now().isoformat()
+        "registered_at": datetime.now().isoformat()
     }
+    
+    if "users" not in users:
+        users["users"] = []
     
     users["users"].append(new_user)
     await write_json("users", users)
@@ -108,116 +136,10 @@ async def register_user(message: types.Message, state: FSMContext):
     keyboard.add(types.KeyboardButton("Открыть веб-приложение", web_app=types.WebAppInfo(url=WEBAPP_URL)))
     
     await message.answer(
-        "Регистрация успешно завершена! Теперь вы можете использовать веб-приложение.",
+        f"Регистрация завершена!\nДобро пожаловать, {user_data['full_name']}!",
         reply_markup=keyboard
     )
     await state.finish()
 
-from utils.notifications import NotificationManager
-from backend.app.utils.excel_parser import ScheduleParser
-
-# Инициализация менеджера уведомлений
-notification_manager = NotificationManager(bot)
-
-# Обновляем обработчик загрузки расписания
-@dp.message_handler(content_types=['document'], commands=['upload_schedule'])
-async def handle_schedule_upload(message: types.Message):
-    users = await read_json("users")
-    user = next((u for u in users["users"] if u["id"] == str(message.from_user.id)), None)
-    
-    if not user or user["role"] != "admin":
-        await message.answer("У вас нет прав для загрузки расписания.")
-        return
-    
-    if not message.document.file_name.endswith(('.xls', '.xlsx')):
-        await message.answer("Пожалуйста, загрузите файл Excel (.xls или .xlsx)")
-        return
-    
-    try:
-        # Скачиваем файл
-        file_info = await bot.get_file(message.document.file_id)
-        downloaded_file = await bot.download_file(file_info.file_path)
-        temp_filename = f"temp_{message.document.file_name}"
-        
-        with open(temp_filename, "wb") as new_file:
-            new_file.write(downloaded_file.read())
-        
-        # Парсим расписание
-        parser = ScheduleParser()
-        schedule_data = parser.parse_excel(temp_filename)
-        
-        # Сохраняем результат
-        await write_json("schedule", schedule_data)
-        
-        # Получаем список групп для уведомлений
-        affected_groups = list(schedule_data["groups"].keys())
-        
-        # Отправляем уведомления
-        await notification_manager.notify_about_schedule_update(affected_groups)
-        
-        await message.answer("✅ Расписание успешно загружено и обновлено!")
-        
-    except Exception as e:
-        await message.answer(f"❌ Произошла ошибка при загрузке расписания: {str(e)}")
-    finally:
-        if os.path.exists(temp_filename):
-            os.remove(temp_filename)
-
-# Добавляем обработчик создания жалоб
-@dp.message_handler(commands=['dispute'])
-async def create_dispute_command(message: types.Message):
-    try:
-        users = await read_json("users")
-        user = next((u for u in users["users"] if u["id"] == str(message.from_user.id)), None)
-        
-        if not user or user["role"] != "student":
-            await message.answer("Только студенты могут создавать жалобы.")
-            return
-        
-        # Парсим аргументы команды
-        args = message.get_args().split('|')
-        if len(args) < 3:
-            await message.answer("Использование: /dispute предмет|преподаватель|описание")
-            return
-            
-        subject, teacher_name, description = args
-        
-        # Находим ID преподавателя
-        teacher = next((u for u in users["users"] 
-                       if u["role"] == "teacher" and teacher_name.lower() in u["full_name"].lower()), None)
-        
-        if not teacher:
-            await message.answer("Преподаватель не найден.")
-            return
-            
-        # Создаем жалобу
-        disputes = await read_json("disputes")
-        new_dispute = {
-            "id": str(len(disputes["disputes"]) + 1),
-            "student_id": str(message.from_user.id),
-            "subject": subject,
-            "teacher_id": teacher["id"],
-            "description": description,
-            "status": "pending",
-            "created_at": datetime.now().isoformat()
-        }
-        
-        disputes["disputes"].append(new_dispute)
-        await write_json("disputes", disputes)
-        
-        # Отправляем уведомление преподавателю
-        await notification_manager.notify_teacher_about_dispute(
-            teacher["id"],
-            user["full_name"],
-            subject,
-            description
-        )
-        
-        await message.answer("✅ Жалоба успешно создана и отправлена преподавателю.")
-        
-    except Exception as e:
-        await message.answer(f"❌ Произошла ошибка при создании жалобы: {str(e)}")
-
 if __name__ == '__main__':
-    from aiogram import executor
     executor.start_polling(dp, skip_updates=True)

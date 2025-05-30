@@ -1,14 +1,17 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { CSSTransition, TransitionGroup } from 'react-transition-group';
 import { initTelegramWebApp, getUserData } from './utils/telegram';
 import Navigation from './components/Navigation';
+import StudentDashboard from './components/StudentDashboard';
 import './App.css';
 
 interface User {
   role: string;
   id: string;
   name: string;
+  avatar?: string;
+  progress?: number;
 }
 
 interface NavigationProps {
@@ -26,7 +29,14 @@ const AnimatedRoutes = React.memo<AnimatedRoutesProps>(({ user }) => {
     <TransitionGroup>
       <CSSTransition key={location.key} timeout={300} classNames="fade">
         <Routes location={location}>
-          <Route path="/" element={<div>Главная страница</div>} />
+          <Route path="/" element={
+            user.role === 'student' ? 
+              <StudentDashboard user={user} /> : 
+              <div>Главная страница</div>
+          } />
+          {user.role === 'student' && (
+            <Route path="/dashboard" element={<StudentDashboard user={user} />} />
+          )}
           {user.role === 'admin' && (
             <Route path="/admin" element={<div>Админ панель</div>} />
           )}
@@ -52,13 +62,25 @@ const App: React.FC = () => {
   }, []);
 
   if (!user) {
-    return <div>Загрузка...</div>;
+    return (
+      <div style={{
+        background: '#1a1a1a',
+        color: '#fff',
+        height: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: '18px'
+      }}>
+        Загрузка...
+      </div>
+    );
   }
 
   return (
     <Router>
       <div className="app">
-        <Navigation userRole={user.role} />
+        {user.role !== 'student' && <Navigation userRole={user.role} />}
         <AnimatedRoutes user={user} />
       </div>
     </Router>
